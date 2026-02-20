@@ -56,7 +56,7 @@ const Profile = () => {
       }
 
       // ✅ STEP 1: Get user data (name, age) from auth endpoint
-      const authResponse = await fetch('${import.meta.env.VITE_API_BASE_URL}/auth/profile', {
+      const authResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/profile`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ const Profile = () => {
       }
 
       // ✅ STEP 2: Get profile data (height, weight, etc.) from profile endpoint
-      const profileResponse = await fetch('${import.meta.env.VITE_API_BASE_URL}/profile/', {
+      const profileResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ const Profile = () => {
       formData.append('profile_photo', photoFile);
 
       const response = await fetch(
-        '${import.meta.env.VITE_API_BASE_URL}/profile/upload-photo',
+        `${import.meta.env.VITE_API_BASE_URL}/profile/upload-photo`,
         {
           method: 'POST',
           headers: {
@@ -229,7 +229,7 @@ const Profile = () => {
 
       console.log('📤 Sending profile data:', profile);
 
-      const response = await fetch('${import.meta.env.VITE_API_BASE_URL}/profile/', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -327,7 +327,7 @@ const Profile = () => {
   const handleDeletePhoto = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('${import.meta.env.VITE_API_BASE_URL}/profile/photo', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/profile/photo`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
