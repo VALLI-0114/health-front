@@ -22,40 +22,60 @@ interface ActivityItem {
   timestamp: string;
   verified: boolean;
 }
+
 interface ClusterStats {
-  anemiaHighRisk: number; anemiaMediumRisk: number; anemiaLowRisk: number;
-  pcodHighRisk: number; pcodMediumRisk: number; pcodLowRisk: number;
+  anemiaHighRisk: number;
+  anemiaMediumRisk: number;
+  anemiaLowRisk: number;
+  pcodHighRisk: number;
+  pcodMediumRisk: number;
+  pcodLowRisk: number;
 }
+
 interface DashboardStats {
-  totalUsers: number; anemiaChecks: number; pcodChecks: number;
-  combinedChecks: number; blockchainRecords: number;
-  recentActivity: ActivityItem[]; clusterStats: ClusterStats;
+  totalUsers: number;
+  anemiaChecks: number;
+  pcodChecks: number;
+  combinedChecks: number;
+  blockchainRecords: number;
+  recentActivity: ActivityItem[];
+  clusterStats: ClusterStats;
 }
+
 interface PredictionRow {
-  roll_no: string; age: number | string; bmi: number | string;
-  hemoglobin: number | string; prediction: string;
-  confidence: number | string; status: string; isSafe: boolean;
+  roll_no: string;
+  age: number | string;
+  bmi: number | string;
+  hemoglobin: number | string;
+  prediction: string;
+  confidence: number | string;
+  status: string;
+  isSafe: boolean;
 }
+
 type SortKey = keyof PredictionRow;
 type SortDir = "asc" | "desc";
 type TabId = "overview" | "bulk" | "activity" | "analytics" | "alerts";
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: "overview",  label: "Overview",      icon: <BarChart3 className="w-4 h-4" /> },
-  { id: "bulk",      label: "Bulk Analysis", icon: <Upload className="w-4 h-4" /> },
-  { id: "activity",  label: "Live Activity", icon: <Radio className="w-4 h-4" /> },
-  { id: "analytics", label: "Analytics",     icon: <TrendingUp className="w-4 h-4" /> },
-  { id: "alerts",    label: "Alerts",        icon: <Bell className="w-4 h-4" /> },
+  { id: "overview", label: "Overview", icon: <BarChart3 /> },
+  { id: "bulk", label: "Bulk Analysis", icon: <FileSpreadsheet /> },
+  { id: "activity", label: "Live Activity", icon: <Activity /> },
+  { id: "analytics", label: "Analytics", icon: <TrendingUp /> },
+  { id: "alerts", label: "Alerts", icon: <Bell /> },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const todayStr = () => new Date().toISOString().split("T")[0];
 const triggerDownload = (blob: Blob, filename: string) => {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click();
-  window.URL.revokeObjectURL(url); document.body.removeChild(a);
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -69,12 +89,10 @@ const AdminDashboard: React.FC = () => {
   const [isLive, setIsLive] = useState(false);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [newActivityIds, setNewActivityIds] = useState<Set<string>>(new Set());
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-
+  const [lastRefresh, setLastRefresh] = useState(new Date());
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const [predictionRows, setPredictionRows] = useState<PredictionRow[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [filterText, setFilterText] = useState("");
@@ -83,7 +101,7 @@ const AdminDashboard: React.FC = () => {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevActivityRef = useRef<ActivityItem[]>([]);
 
   useEffect(() => {
@@ -98,8 +116,12 @@ const AdminDashboard: React.FC = () => {
     intervalRef.current = setInterval(() => loadDashboardData(true), REFRESH_INTERVAL);
     setIsLive(true);
   };
+
   const stopPolling = () => {
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setIsLive(false);
   };
 
@@ -203,7 +225,9 @@ const AdminDashboard: React.FC = () => {
       setUploading(true); setSuccessMessage(null);
       setPredictionRows([]); setShowResults(false); setResultBlob(null);
       const res = await fetch(`${API_BASE_URL}/admin/bulk-upload`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData,
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       if (res.status === 401 || res.status === 403) { navigate("/admin-login"); return; }
       if (!res.ok) {
@@ -215,7 +239,8 @@ const AdminDashboard: React.FC = () => {
       setResultBlob(blob);
       const rows = await parseXlsxBlob(blob);
       setPredictionRows(rows); setShowResults(true);
-      setFilterText(""); setFilterStatus("all"); setSortKey("roll_no"); setSortDir("asc");
+      setFilterText(""); setFilterStatus("all");
+      setSortKey("roll_no"); setSortDir("asc");
       showSuccess(`Analysis complete — ${rows.length} records processed.`);
       setUploadFile(null);
       const fi = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -245,7 +270,8 @@ const AdminDashboard: React.FC = () => {
     })
     .sort((a, b) => {
       const av = a[sortKey], bv = b[sortKey];
-      const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
+      const cmp = typeof av === "number" && typeof bv === "number"
+        ? av - bv : String(av).localeCompare(String(bv));
       return sortDir === "asc" ? cmp : -cmp;
     });
 
@@ -254,85 +280,89 @@ const AdminDashboard: React.FC = () => {
   const pcodCnt = predictionRows.filter(r => r.prediction === "PCOD").length;
   const alertCnt = anemiaCnt + pcodCnt;
 
-  // ── CSS-in-JS theme tokens ────────────────────────────────────────────────
+  // ── Light Pink Theme ──────────────────────────────────────────────────────
   const theme = {
-    bg: "linear-gradient(135deg, #1a0814 0%, #2e0a28 45%, #1a0818 100%)",
-    card: "rgba(255,255,255,0.04)",
-    border: "rgba(255,160,200,0.12)",
+    bg: "linear-gradient(135deg, #fff0f5 0%, #fce4ec 45%, #fdf2f8 100%)",
+    card: "rgba(255,255,255,0.75)",
+    cardSolid: "#ffffff",
+    border: "rgba(233,30,140,0.15)",
+    borderStrong: "rgba(233,30,140,0.3)",
     primary: "#e91e8c",
     primaryDark: "#c2185b",
-    primaryGlow: "rgba(233,30,140,0.35)",
-    text: "rgba(255,190,220,0.6)",
-    textMuted: "rgba(255,180,210,0.35)",
+    primaryLight: "#f48fb1",
+    primaryGlow: "rgba(233,30,140,0.2)",
+    primaryBg: "rgba(233,30,140,0.08)",
+    text: "#7b2d5e",
+    textMuted: "#c084a8",
+    textStrong: "#4a1040",
+    heading: "#3d0c32",
+    shadow: "0 4px 24px rgba(233,30,140,0.1)",
+    shadowMd: "0 8px 32px rgba(233,30,140,0.15)",
+    inputBg: "rgba(255,240,248,0.9)",
+    successBg: "rgba(16,185,129,0.1)",
+    successText: "#065f46",
+    successBorder: "rgba(16,185,129,0.3)",
+    errorBg: "rgba(244,63,94,0.08)",
+    errorText: "#9f1239",
+    warningBg: "rgba(245,158,11,0.08)",
+    warningText: "#92400e",
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: theme.bg }}>
-      <div className="text-center">
-        <div className="w-16 h-16 rounded-full animate-spin mx-auto mb-4"
-          style={{ border: "4px solid rgba(255,150,180,0.15)", borderTopColor: theme.primary }} />
-        <p className="font-medium tracking-wide" style={{ color: "#fbcfe8" }}>Loading dashboard…</p>
+    <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 48, height: 48, borderRadius: "50%", border: `3px solid ${theme.primaryLight}`, borderTopColor: theme.primary, animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+        <p style={{ color: theme.text, fontWeight: 600, fontSize: "0.95rem" }}>Loading dashboard…</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: theme.bg }}>
-      <div className="rounded-2xl p-8 max-w-md text-center" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-        <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: theme.primary }} />
-        <p className="text-white font-semibold mb-2">Error</p>
-        <p className="text-sm mb-6" style={{ color: "#fbcfe8" }}>{error}</p>
-        <button onClick={() => loadDashboardData()} className="w-full py-2.5 rounded-xl text-white font-bold mb-3"
-          style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})` }}>Retry</button>
-        <button onClick={() => navigate("/admin-login")} className="w-full py-2.5 rounded-xl font-medium"
-          style={{ background: "rgba(255,255,255,0.08)", color: "#fbcfe8" }}>Back to Login</button>
+    <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div style={{ background: theme.cardSolid, border: `1px solid ${theme.borderStrong}`, borderRadius: 20, padding: "2rem", maxWidth: 380, width: "100%", textAlign: "center", boxShadow: theme.shadowMd }}>
+        <AlertCircle style={{ color: "#e91e8c", width: 40, height: 40, margin: "0 auto 12px" }} />
+        <h2 style={{ color: theme.heading, fontWeight: 700, marginBottom: 8 }}>Error</h2>
+        <p style={{ color: theme.text, marginBottom: 20, fontSize: "0.9rem" }}>{error}</p>
+        <button onClick={() => loadDashboardData()} className="w-full py-2.5 rounded-xl text-white font-bold mb-3" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, border: "none", cursor: "pointer", padding: "10px", borderRadius: 12, color: "white", fontWeight: 700, marginBottom: 12, width: "100%" }}>Retry</button>
+        <button onClick={() => navigate("/admin-login")} style={{ background: theme.primaryBg, border: `1px solid ${theme.border}`, cursor: "pointer", padding: "10px", borderRadius: 12, color: theme.primary, fontWeight: 600, width: "100%" }}>Back to Login</button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen" style={{ background: theme.bg, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       {/* Ambient blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-48 -left-48 w-[500px] h-[500px] rounded-full opacity-[0.12]"
-          style={{ background: "radial-gradient(circle, #e91e8c, transparent 70%)" }} />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full opacity-[0.08]"
-          style={{ background: "radial-gradient(circle, #ff6eb0, transparent 70%)" }} />
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+        <div style={{ position: "absolute", top: "-10%", right: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(233,30,140,0.08) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "10%", left: "-8%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(236,64,122,0.07) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", top: "40%", left: "50%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,182,193,0.12) 0%, transparent 70%)", transform: "translateX(-50%)" }} />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-5">
-
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1280, margin: "0 auto", padding: "24px 20px" }}>
         {/* ── Header ── */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
-              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, boxShadow: `0 6px 20px ${theme.primaryGlow}` }}>
-              <Heart className="w-5 h-5 text-white" fill="white" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${theme.primaryGlow}` }}>
+              <Heart style={{ width: 24, height: 24, color: "white" }} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">Women's Health Admin</h1>
-              <p className="text-xs" style={{ color: theme.textMuted }}>
-                Last synced {lastRefresh.toLocaleTimeString()}
-              </p>
+              <h1 style={{ color: theme.heading, fontWeight: 800, fontSize: "1.5rem", lineHeight: 1.1, margin: 0 }}>Women's Health Admin</h1>
+              <p style={{ color: theme.textMuted, fontSize: "0.75rem", margin: "2px 0 0" }}>Last synced {lastRefresh.toLocaleTimeString()}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isLive && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{ background: "rgba(236,72,153,0.12)", border: "1px solid rgba(236,72,153,0.28)" }}>
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#ec4899" }} />
-                <span className="text-xs font-semibold" style={{ color: "#f9a8d4" }}>Live</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 20, padding: "5px 12px" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", animation: "pulse 1.5s infinite" }} />
+                <span style={{ color: "#059669", fontSize: "0.75rem", fontWeight: 700 }}>Live</span>
               </div>
             )}
-            <button onClick={() => loadDashboardData()} title="Refresh"
-              className="p-2 rounded-xl transition-all hover:scale-105"
-              style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-              <RefreshCw className="w-4 h-4" style={{ color: "#f9a8d4" }} />
+            <button onClick={() => loadDashboardData()} title="Refresh" style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 10, cursor: "pointer", color: theme.primary, display: "flex", alignItems: "center", boxShadow: theme.shadow }}>
+              <RefreshCw style={{ width: 16, height: 16 }} />
             </button>
-            <button onClick={handleDownloadReport} disabled={downloadingReport}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-bold transition-all hover:scale-105 disabled:opacity-40"
-              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, boxShadow: `0 4px 18px ${theme.primaryGlow}` }}>
-              <Download className="w-4 h-4" />
+            <button onClick={handleDownloadReport} disabled={downloadingReport} style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, border: "none", borderRadius: 12, padding: "10px 18px", cursor: "pointer", color: "white", fontSize: "0.85rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 6, boxShadow: `0 4px 14px ${theme.primaryGlow}` }}>
+              <Download style={{ width: 15, height: 15 }} />
               {downloadingReport ? "Exporting…" : "Export Report"}
             </button>
           </div>
@@ -340,43 +370,52 @@ const AdminDashboard: React.FC = () => {
 
         {/* ── Success banner ── */}
         {successMessage && (
-          <div className="rounded-xl p-3.5 flex items-center gap-3"
-            style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.28)" }}>
-            <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "#f472b6" }} />
-            <span className="text-sm font-medium" style={{ color: "#fbcfe8" }}>{successMessage}</span>
+          <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 14, padding: "12px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            <CheckCircle style={{ width: 18, height: 18, color: "#10b981", flexShrink: 0 }} />
+            <span style={{ color: "#065f46", fontWeight: 600, fontSize: "0.875rem" }}>{successMessage}</span>
           </div>
         )}
 
         {/* ── Navigation Tabs ── */}
-        <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl"
-          style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${theme.border}` }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 24, background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 16, padding: 6, flexWrap: "wrap", boxShadow: theme.shadow }}>
           {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all relative"
-              style={activeTab === tab.id
-                ? { background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white", boxShadow: `0 4px 14px ${theme.primaryGlow}` }
-                : { color: theme.text }}>
-              {tab.icon}{tab.label}
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "9px 16px", borderRadius: 11,
+                fontSize: "0.85rem", fontWeight: 600,
+                border: "none", cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+                ...(activeTab === tab.id
+                  ? { background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white", boxShadow: `0 4px 14px ${theme.primaryGlow}` }
+                  : { background: "transparent", color: theme.text })
+              }}
+            >
+              {React.cloneElement(tab.icon as React.ReactElement, { style: { width: 15, height: 15 } })}
+              {tab.label}
               {tab.id === "alerts" && alertCnt > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
-                  style={{ background: "#dc2626" }}>{alertCnt > 9 ? "9+" : alertCnt}</span>
+                <span style={{ background: "#ef4444", color: "white", borderRadius: 20, fontSize: "0.65rem", fontWeight: 800, padding: "1px 6px", marginLeft: 2 }}>
+                  {alertCnt > 9 ? "9+" : alertCnt}
+                </span>
               )}
             </button>
           ))}
         </div>
 
-        {/* ── Time Filter (overview + analytics) ── */}
+        {/* ── Time Filter ── */}
         {(activeTab === "overview" || activeTab === "analytics") && (
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl"
-            style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-            <Filter className="w-4 h-4" style={{ color: "#f9a8d4" }} />
-            <span className="text-sm font-medium" style={{ color: theme.text }}>Period:</span>
-            {(["today","week","month","all"] as const).map(p => (
-              <button key={p} onClick={() => setTimeFilter(p)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
-                style={timeFilter === p
-                  ? { background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white" }
-                  : { background: "rgba(255,255,255,0.07)", color: theme.text }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+            <span style={{ color: theme.textMuted, fontSize: "0.8rem", fontWeight: 600 }}>Period:</span>
+            {(["today", "week", "month", "all"] as const).map(p => (
+              <button key={p} onClick={() => setTimeFilter(p)} style={{
+                padding: "6px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 700, border: "none", cursor: "pointer",
+                ...(timeFilter === p
+                  ? { background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white", boxShadow: `0 2px 10px ${theme.primaryGlow}` }
+                  : { background: theme.cardSolid, border: `1px solid ${theme.border}`, color: theme.text })
+              }}>
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </button>
             ))}
@@ -385,90 +424,86 @@ const AdminDashboard: React.FC = () => {
 
         {/* ════ OVERVIEW ════ */}
         {activeTab === "overview" && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <KpiCard icon={<Users />} value={stats?.totalUsers ?? 0} label="Total Users" sub="All time" color={theme.primary} />
-              <KpiCard icon={<Activity />} value={stats?.anemiaChecks ?? 0} label="Anemia Checks" sub={`This ${timeFilter}`} color="#f43f5e" />
-              <KpiCard icon={<TrendingUp />} value={stats?.pcodChecks ?? 0} label="PCOD Checks" sub={`This ${timeFilter}`} color="#ec4899" />
-              <KpiCard icon={<Database />} value={stats?.combinedChecks ?? 0} label="Combined" sub={`This ${timeFilter}`} color="#db2777" />
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
+              <KpiCard theme={theme} icon={<Users />} value={stats?.totalUsers ?? 0} label="Total Users" sub="All time" color={theme.primary} />
+              <KpiCard theme={theme} icon={<Activity />} value={stats?.anemiaChecks ?? 0} label="Anemia Checks" sub={`This ${timeFilter}`} color="#f43f5e" />
+              <KpiCard theme={theme} icon={<Eye />} value={stats?.pcodChecks ?? 0} label="PCOD Checks" sub={`This ${timeFilter}`} color="#ec4899" />
+              <KpiCard theme={theme} icon={<Database />} value={stats?.combinedChecks ?? 0} label="Combined" sub={`This ${timeFilter}`} color="#db2777" />
             </div>
+
             {stats?.clusterStats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <RiskPanel title="Anemia Risk" icon={<Activity />} high={stats.clusterStats.anemiaHighRisk} medium={stats.clusterStats.anemiaMediumRisk} low={stats.clusterStats.anemiaLowRisk} />
-                <RiskPanel title="PCOD Risk" icon={<TrendingUp />} high={stats.clusterStats.pcodHighRisk} medium={stats.clusterStats.pcodMediumRisk} low={stats.clusterStats.pcodLowRisk} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginBottom: 24 }}>
+                <RiskPanel theme={theme} title="Anemia Risk Distribution" icon={<Activity />} high={stats.clusterStats.anemiaHighRisk} medium={stats.clusterStats.anemiaMediumRisk} low={stats.clusterStats.anemiaLowRisk} />
+                <RiskPanel theme={theme} title="PCOD Risk Distribution" icon={<Heart />} high={stats.clusterStats.pcodHighRisk} medium={stats.clusterStats.pcodMediumRisk} low={stats.clusterStats.pcodLowRisk} />
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <QuickStat label="High Risk Users" value={(stats?.clusterStats.anemiaHighRisk ?? 0) + (stats?.clusterStats.pcodHighRisk ?? 0)} icon={<AlertTriangle />} color="#ef4444" />
-              <QuickStat label="Blockchain Verified" value={stats?.blockchainRecords ?? 0} icon={<ShieldCheck />} color="#a855f7" />
-              <QuickStat label="Healthy Users" value={Math.max(0, (stats?.totalUsers ?? 0) - (stats?.clusterStats.anemiaHighRisk ?? 0) - (stats?.clusterStats.pcodHighRisk ?? 0))} icon={<UserCheck />} color="#10b981" />
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
+              <QuickStat theme={theme} label="Blockchain Records" value={stats?.blockchainRecords ?? 0} icon={<Database />} color="#ef4444" />
+              <QuickStat theme={theme} label="Verified Checks" value={stats?.recentActivity?.filter(a => a.verified).length ?? 0} icon={<ShieldCheck />} color="#a855f7" />
+              <QuickStat theme={theme} label="Active Users" value={stats?.totalUsers ?? 0} icon={<UserCheck />} color="#10b981" />
             </div>
           </div>
         )}
 
         {/* ════ BULK ANALYSIS ════ */}
         {activeTab === "bulk" && (
-          <div className="space-y-5">
+          <div>
             {/* Upload card */}
-            <div className="rounded-2xl p-6" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(233,30,140,0.12)", border: "1px solid rgba(233,30,140,0.25)" }}>
-                  <Zap className="w-5 h-5" style={{ color: "#f9a8d4" }} />
+            <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 28, marginBottom: 24, boxShadow: theme.shadow }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: theme.primaryBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <FileSpreadsheet style={{ width: 20, height: 20, color: theme.primary }} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Bulk ML Health Analysis</h2>
-                  <p className="text-xs" style={{ color: theme.textMuted }}>Upload student data for instant AI predictions</p>
+                  <h2 style={{ color: theme.heading, fontWeight: 800, fontSize: "1.2rem", margin: 0 }}>Bulk ML Health Analysis</h2>
+                  <p style={{ color: theme.textMuted, fontSize: "0.8rem", margin: "2px 0 0" }}>Upload student data for instant AI predictions</p>
                 </div>
               </div>
 
-              {/* Drop zone */}
-              <label className="block cursor-pointer mb-5">
-                <div className="rounded-2xl p-8 text-center transition-all"
-                  style={{ border: `2px dashed ${uploadFile ? "rgba(233,30,140,0.5)" : "rgba(255,160,200,0.15)"}`, background: uploadFile ? "rgba(233,30,140,0.04)" : "rgba(255,255,255,0.01)" }}>
-                  {uploadFile ? (
-                    <div className="space-y-1.5">
-                      <FileSpreadsheet className="w-10 h-10 mx-auto" style={{ color: "#f9a8d4" }} />
-                      <p className="font-bold text-white">{uploadFile.name}</p>
-                      <p className="text-xs" style={{ color: theme.textMuted }}>{(uploadFile.size / 1024).toFixed(1)} KB · Ready to analyze</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <Upload className="w-10 h-10 mx-auto" style={{ color: "rgba(255,160,200,0.25)" }} />
-                      <p className="font-medium" style={{ color: theme.text }}>Click to select file</p>
-                      <p className="text-xs" style={{ color: theme.textMuted }}>.xlsx or .csv · max 5 MB</p>
-                    </div>
+              <div style={{ marginTop: 20 }}>
+                <label style={{ display: "block", cursor: "pointer" }}>
+                  <input type="file" accept=".xlsx,.csv" onChange={handleUpload} style={{ display: "none" }} />
+                  <div style={{ border: `2px dashed ${theme.borderStrong}`, borderRadius: 16, padding: "32px 20px", textAlign: "center", background: theme.primaryBg, transition: "all 0.2s" }}>
+                    {uploadFile ? (
+                      <div>
+                        <FileSpreadsheet style={{ width: 36, height: 36, color: theme.primary, margin: "0 auto 8px" }} />
+                        <p style={{ color: theme.heading, fontWeight: 700, fontSize: "0.95rem", margin: "0 0 4px" }}>{uploadFile.name}</p>
+                        <p style={{ color: theme.textMuted, fontSize: "0.8rem", margin: 0 }}>{(uploadFile.size / 1024).toFixed(1)} KB · Ready to analyze</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload style={{ width: 36, height: 36, color: theme.primaryLight, margin: "0 auto 8px" }} />
+                        <p style={{ color: theme.text, fontWeight: 600, fontSize: "0.95rem", margin: "0 0 4px" }}>Click to select file</p>
+                        <p style={{ color: theme.textMuted, fontSize: "0.8rem", margin: 0 }}>.xlsx or .csv · max 5 MB</p>
+                      </div>
+                    )}
+                  </div>
+                </label>
+
+                <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                  <button onClick={handleAnalyze} disabled={uploading || !uploadFile} style={{ flex: 1, background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, border: "none", borderRadius: 12, padding: "12px", color: "white", fontWeight: 700, fontSize: "0.9rem", cursor: uploading || !uploadFile ? "not-allowed" : "pointer", opacity: !uploadFile ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 4px 14px ${theme.primaryGlow}` }}>
+                    {uploading ? (
+                      <><div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", animation: "spin 0.8s linear infinite" }} /> Analyzing…</>
+                    ) : (
+                      <><Zap style={{ width: 16, height: 16 }} /> Upload & Analyze</>
+                    )}
+                  </button>
+                  {resultBlob && (
+                    <button onClick={handleDownloadResults} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 12, padding: "12px 18px", color: "#065f46", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                      <Download style={{ width: 15, height: 15 }} /> Download Results (.xlsx)
+                    </button>
                   )}
                 </div>
-                <input type="file" accept=".xlsx,.csv" onChange={handleUpload} className="hidden" />
-              </label>
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-3">
-                <button onClick={handleAnalyze} disabled={uploading || !uploadFile}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-bold text-sm transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
-                  style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, boxShadow: `0 4px 18px ${theme.primaryGlow}` }}>
-                  {uploading
-                    ? <><div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid rgba(255,255,255,0.25)", borderTopColor: "white" }} />Analyzing…</>
-                    : <><Zap className="w-4 h-4" />Upload & Analyze</>}
-                </button>
-
-                {resultBlob && (
-                  <button onClick={handleDownloadResults}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
-                    style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${theme.border}`, color: "#fbcfe8" }}>
-                    <Download className="w-4 h-4" />Download Results (.xlsx)
-                  </button>
-                )}
               </div>
 
               {/* Required columns */}
-              <div className="mt-5 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${theme.border}` }}>
-                <p className="text-xs font-bold mb-2" style={{ color: theme.textMuted }}>REQUIRED COLUMNS</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {["roll_no","age","height_cm","weight_kg","hemoglobin","tiredness","weakness","pale_skin","dizziness","breathless","hair_fall","headache","cold_hand","pica","chest_pain","palpitations"].map(c => (
-                    <span key={c} className="px-2 py-0.5 rounded-md text-xs font-mono"
-                      style={{ background: "rgba(233,30,140,0.1)", color: "#f9a8d4", border: "1px solid rgba(233,30,140,0.2)" }}>{c}</span>
+              <div style={{ marginTop: 20 }}>
+                <p style={{ color: theme.textMuted, fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>REQUIRED COLUMNS</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {["roll_no", "age", "height_cm", "weight_kg", "hemoglobin", "tiredness", "weakness", "pale_skin", "dizziness", "breathless", "hair_fall", "headache", "cold_hand", "pica", "chest_pain", "palpitations"].map(c => (
+                    <span key={c} style={{ background: theme.primaryBg, border: `1px solid ${theme.border}`, borderRadius: 6, padding: "3px 9px", fontSize: "0.72rem", color: theme.primary, fontWeight: 600 }}>{c}</span>
                   ))}
                 </div>
               </div>
@@ -476,58 +511,56 @@ const AdminDashboard: React.FC = () => {
 
             {/* Results table */}
             {showResults && predictionRows.length > 0 && (
-              <div className="rounded-2xl p-6 space-y-5" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-bold text-white">Prediction Results</h3>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full font-bold"
-                      style={{ background: "rgba(233,30,140,0.15)", color: "#f9a8d4", border: "1px solid rgba(233,30,140,0.3)" }}>
-                      {predictionRows.length} records
-                    </span>
+              <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 24, boxShadow: theme.shadow }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <h3 style={{ color: theme.heading, fontWeight: 800, fontSize: "1.05rem", margin: 0 }}>Prediction Results</h3>
+                    <span style={{ background: theme.primaryBg, border: `1px solid ${theme.border}`, borderRadius: 20, padding: "3px 12px", fontSize: "0.75rem", color: theme.primary, fontWeight: 700 }}>{predictionRows.length} records</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={handleDownloadResults} disabled={!resultBlob}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 disabled:opacity-40"
-                      style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white" }}>
-                      <Download className="w-3.5 h-3.5" />Download
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={handleDownloadResults} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 10, padding: "7px 14px", color: "#065f46", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                      <Download style={{ width: 14, height: 14 }} /> Download
                     </button>
-                    <button onClick={() => setShowResults(false)} className="p-2 rounded-xl transition-all"
-                      style={{ background: "rgba(255,255,255,0.07)" }}>
-                      <X className="w-4 h-4" style={{ color: theme.text }} />
+                    <button onClick={() => setShowResults(false)} style={{ background: theme.primaryBg, border: `1px solid ${theme.border}`, borderRadius: 10, padding: 8, cursor: "pointer", color: theme.primary }}>
+                      <X style={{ width: 14, height: 14 }} />
                     </button>
                   </div>
                 </div>
 
                 {/* Summary pills */}
-                <div className="flex flex-wrap gap-2">
+                <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
                   {[
-                    { label: "Total",      count: predictionRows.length, bg: "rgba(255,255,255,0.07)", color: "white", bd: "rgba(255,255,255,0.12)" },
-                    { label: "✅ Safe",    count: safeCnt,   bg: "rgba(16,185,129,0.1)", color: "#6ee7b7", bd: "rgba(16,185,129,0.25)" },
-                    { label: "🩸 Anemia", count: anemiaCnt, bg: "rgba(244,63,94,0.1)",  color: "#fda4af", bd: "rgba(244,63,94,0.25)" },
-                    { label: "⚠️ PCOD",   count: pcodCnt,   bg: "rgba(245,158,11,0.1)", color: "#fcd34d", bd: "rgba(245,158,11,0.25)" },
+                    { label: "Total", count: predictionRows.length, bg: theme.primaryBg, color: theme.primary, bd: theme.border },
+                    { label: "✅ Safe", count: safeCnt, bg: "rgba(16,185,129,0.08)", color: "#059669", bd: "rgba(16,185,129,0.25)" },
+                    { label: "🩸 Anemia", count: anemiaCnt, bg: "rgba(244,63,94,0.08)", color: "#be123c", bd: "rgba(244,63,94,0.25)" },
+                    { label: "⚠️ PCOD", count: pcodCnt, bg: "rgba(245,158,11,0.08)", color: "#92400e", bd: "rgba(245,158,11,0.25)" },
                   ].map(p => (
-                    <div key={p.label} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
-                      style={{ background: p.bg, color: p.color, border: `1px solid ${p.bd}` }}>
-                      <span>{p.label}</span><span>{p.count}</span>
+                    <div key={p.label} style={{ background: p.bg, border: `1px solid ${p.bd}`, borderRadius: 10, padding: "6px 14px", display: "flex", gap: 6, alignItems: "center" }}>
+                      <span style={{ color: p.color, fontSize: "0.8rem", fontWeight: 600 }}>{p.label}</span>
+                      <span style={{ color: p.color, fontSize: "0.9rem", fontWeight: 800 }}>{p.count}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                    <input type="text" placeholder="Search by Roll No…" value={filterText} onChange={e => setFilterText(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white focus:outline-none"
-                      style={{ background: "rgba(255,255,255,0.06)", border: `1px solid ${theme.border}` }} />
+                <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+                  <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+                    <Search style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: theme.textMuted }} />
+                    <input
+                      placeholder="Search roll number…"
+                      value={filterText}
+                      onChange={e => setFilterText(e.target.value)}
+                      style={{ width: "100%", paddingLeft: 34, paddingRight: 16, paddingTop: 9, paddingBottom: 9, borderRadius: 12, fontSize: "0.85rem", color: theme.heading, background: theme.inputBg, border: `1px solid ${theme.border}`, outline: "none", boxSizing: "border-box" }}
+                    />
                   </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {(["all","Safe","Anemia","PCOD"] as const).map(s => (
-                      <button key={s} onClick={() => setFilterStatus(s)}
-                        className="px-3 py-2 rounded-xl text-xs font-bold transition-all"
-                        style={filterStatus === s
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {(["all", "Safe", "Anemia", "PCOD"] as const).map(s => (
+                      <button key={s} onClick={() => setFilterStatus(s)} style={{
+                        padding: "8px 14px", borderRadius: 10, fontSize: "0.78rem", fontWeight: 700, border: "none", cursor: "pointer",
+                        ...(filterStatus === s
                           ? { background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white" }
-                          : { background: "rgba(255,255,255,0.07)", color: theme.text }}>
+                          : { background: theme.primaryBg, border: `1px solid ${theme.border}`, color: theme.text })
+                      }}>
                         {s === "all" ? "All" : s}
                       </button>
                     ))}
@@ -535,24 +568,23 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${theme.border}` }}>
-                  <table className="w-full text-sm">
+                <div style={{ overflowX: "auto", borderRadius: 14, border: `1px solid ${theme.border}` }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: `1px solid ${theme.border}` }}>
+                      <tr style={{ background: "rgba(233,30,140,0.05)" }}>
                         {[
-                          { key:"roll_no", label:"Roll No" }, { key:"age", label:"Age" },
-                          { key:"bmi", label:"BMI" }, { key:"hemoglobin", label:"Hgb (g/dL)" },
-                          { key:"prediction", label:"Diagnosis" }, { key:"confidence", label:"Confidence" },
-                          { key:"isSafe", label:"Safe Status" },
+                          { key: "roll_no", label: "Roll No" },
+                          { key: "age", label: "Age" },
+                          { key: "bmi", label: "BMI" },
+                          { key: "hemoglobin", label: "Hgb (g/dL)" },
+                          { key: "prediction", label: "Diagnosis" },
+                          { key: "confidence", label: "Confidence" },
+                          { key: "isSafe", label: "Safe Status" },
                         ].map(({ key, label }) => (
-                          <th key={key} onClick={() => handleSort(key as SortKey)}
-                            className="text-left px-4 py-3 cursor-pointer select-none transition-colors"
-                            style={{ color: theme.textMuted, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-                            <span className="flex items-center gap-1">
+                          <th key={key} onClick={() => handleSort(key as SortKey)} style={{ textAlign: "left", padding: "12px 16px", cursor: "pointer", color: theme.textMuted, fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", userSelect: "none", borderBottom: `1px solid ${theme.border}` }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                               {label}
-                              {sortKey === key
-                                ? sortDir === "asc" ? <ChevronUp className="w-3 h-3" style={{ color: "#f9a8d4" }} /> : <ChevronDown className="w-3 h-3" style={{ color: "#f9a8d4" }} />
-                                : <ChevronUp className="w-3 h-3 opacity-20" />}
+                              {sortKey === key ? (sortDir === "asc" ? <ChevronUp style={{ width: 12, height: 12 }} /> : <ChevronDown style={{ width: 12, height: 12 }} />) : null}
                             </span>
                           </th>
                         ))}
@@ -560,35 +592,32 @@ const AdminDashboard: React.FC = () => {
                     </thead>
                     <tbody>
                       {filteredRows.length === 0 ? (
-                        <tr><td colSpan={7} className="text-center py-12" style={{ color: theme.textMuted }}>No records match your filter.</td></tr>
+                        <tr><td colSpan={7} style={{ textAlign: "center", padding: "32px", color: theme.textMuted, fontSize: "0.875rem" }}>No records match your filter.</td></tr>
                       ) : filteredRows.map((row, i) => (
-                        <tr key={`${row.roll_no}-${i}`} style={{ borderBottom: `1px solid rgba(255,160,200,0.04)` }}
-                          className="transition-colors hover:bg-[rgba(233,30,140,0.05)]">
-                          <td className="px-4 py-3 font-mono font-bold text-white">{row.roll_no}</td>
-                          <td className="px-4 py-3" style={{ color: "rgba(255,200,220,0.7)" }}>{row.age}</td>
-                          <td className="px-4 py-3" style={{ color: "rgba(255,200,220,0.7)" }}>{row.bmi}</td>
-                          <td className="px-4 py-3" style={{ color: "rgba(255,200,220,0.7)" }}>{row.hemoglobin}</td>
-                          <td className="px-4 py-3"><PredictionBadge value={row.prediction} /></td>
-                          <td className="px-4 py-3">
+                        <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(233,30,140,0.02)", borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: "12px 16px", color: theme.heading, fontWeight: 600, fontSize: "0.85rem" }}>{row.roll_no}</td>
+                          <td style={{ padding: "12px 16px", color: theme.text, fontSize: "0.85rem" }}>{row.age}</td>
+                          <td style={{ padding: "12px 16px", color: theme.text, fontSize: "0.85rem" }}>{row.bmi}</td>
+                          <td style={{ padding: "12px 16px", color: theme.text, fontSize: "0.85rem" }}>{row.hemoglobin}</td>
+                          <td style={{ padding: "12px 16px" }}><PredictionBadge value={row.prediction} /></td>
+                          <td style={{ padding: "12px 16px" }}>
                             {row.confidence !== "" ? (
-                              <div className="flex items-center gap-2">
-                                <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                  <div className="h-full rounded-full" style={{ width: `${row.confidence}%`, background: `linear-gradient(90deg, ${theme.primary}, #f9a8d4)` }} />
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <div style={{ flex: 1, height: 5, background: "rgba(233,30,140,0.12)", borderRadius: 3, overflow: "hidden", minWidth: 60 }}>
+                                  <div style={{ height: "100%", width: `${Number(row.confidence)}%`, background: `linear-gradient(90deg, ${theme.primaryLight}, ${theme.primary})`, borderRadius: 3 }} />
                                 </div>
-                                <span className="text-xs" style={{ color: theme.text }}>{row.confidence}%</span>
+                                <span style={{ color: theme.text, fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>{row.confidence}%</span>
                               </div>
                             ) : "—"}
                           </td>
-                          <td className="px-4 py-3">
+                          <td style={{ padding: "12px 16px" }}>
                             {row.isSafe ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-                                style={{ background: "rgba(16,185,129,0.12)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.28)" }}>
-                                <ShieldCheck className="w-3 h-3" />Safe
+                              <span style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 20, padding: "3px 10px", color: "#059669", fontSize: "0.75rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <CheckCircle style={{ width: 11, height: 11 }} /> Safe
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-                                style={{ background: "rgba(239,68,68,0.12)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.28)" }}>
-                                <ShieldAlert className="w-3 h-3" />Not Safe
+                              <span style={{ background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 20, padding: "3px 10px", color: "#be123c", fontSize: "0.75rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <AlertCircle style={{ width: 11, height: 11 }} /> Not Safe
                               </span>
                             )}
                           </td>
@@ -597,7 +626,7 @@ const AdminDashboard: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
+                <p style={{ color: theme.textMuted, fontSize: "0.75rem", marginTop: 10, textAlign: "right" }}>
                   Showing {filteredRows.length} of {predictionRows.length} records
                 </p>
               </div>
@@ -607,125 +636,112 @@ const AdminDashboard: React.FC = () => {
 
         {/* ════ LIVE ACTIVITY ════ */}
         {activeTab === "activity" && (
-          <div className="rounded-2xl p-6 space-y-4" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Radio className="w-5 h-5" style={{ color: "#f9a8d4" }} />Live Activity Feed
-              </h2>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-                style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", color: "#86efac" }}>
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#4ade80" }} />
-                Refreshes every 10s
+          <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 24, boxShadow: theme.shadow }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <h2 style={{ color: theme.heading, fontWeight: 800, fontSize: "1.1rem", margin: 0 }}>Live Activity Feed</h2>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, color: theme.textMuted, fontSize: "0.75rem", fontWeight: 600 }}>
+                <Clock style={{ width: 13, height: 13 }} /> Refreshes every 10s
               </span>
             </div>
-            <div className="space-y-2">
-              {stats?.recentActivity?.length ? stats.recentActivity.map(activity => {
-                const aid = `${activity.type}-${activity.id}`;
-                const isNew = newActivityIds.has(aid);
-                return (
-                  <div key={aid} className="flex items-center justify-between p-4 rounded-xl transition-all"
-                    style={{ background: isNew ? "rgba(233,30,140,0.07)" : "rgba(255,255,255,0.025)", border: `1px solid ${isNew ? "rgba(233,30,140,0.28)" : "rgba(255,160,200,0.05)"}` }}>
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-xl"
-                        style={{ background: activity.type === "anemia" ? "rgba(244,63,94,0.15)" : activity.type === "pcod" ? "rgba(236,72,153,0.15)" : "rgba(168,85,247,0.15)" }}>
-                        {activity.type === "anemia" ? <Activity className="w-4 h-4" style={{ color: "#fb7185" }} />
-                          : activity.type === "pcod" ? <TrendingUp className="w-4 h-4" style={{ color: "#f472b6" }} />
-                          : <Database className="w-4 h-4" style={{ color: "#c084fc" }} />}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white text-sm flex items-center gap-2">
-                          {activity.userName}
-                          {isNew && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: theme.primary, color: "white" }}>NEW</span>}
-                        </p>
-                        <p className="text-xs" style={{ color: theme.textMuted }}>
-                          {activity.type.toUpperCase()} —{" "}
-                          <span style={{ color: ["High","Anemia","PCOD","Critical"].some(k => activity.result?.includes(k)) ? "#fda4af" : "#86efac" }}>
-                            {activity.result}
-                          </span>
-                        </p>
-                      </div>
+            {stats?.recentActivity?.length ? stats.recentActivity.map(activity => {
+              const aid = `${activity.type}-${activity.id}`;
+              const isNew = newActivityIds.has(aid);
+              return (
+                <div key={aid} style={{
+                  display: "flex", alignItems: "flex-start", gap: 14,
+                  padding: "14px 0", borderBottom: `1px solid ${theme.border}`,
+                  background: isNew ? "rgba(233,30,140,0.04)" : "transparent",
+                  borderRadius: isNew ? 10 : 0,
+                  paddingLeft: isNew ? 10 : 0,
+                  transition: "all 0.5s"
+                }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: theme.primaryBg, border: `1px solid ${theme.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {activity.type === "anemia" ? <Activity style={{ width: 16, height: 16, color: "#f43f5e" }} /> : activity.type === "pcod" ? <Heart style={{ width: 16, height: 16, color: theme.primary }} /> : <Zap style={{ width: 16, height: 16, color: "#a855f7" }} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                      <span style={{ color: theme.heading, fontWeight: 700, fontSize: "0.875rem" }}>{activity.userName}</span>
+                      {isNew && <span style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryDark})`, color: "white", borderRadius: 20, fontSize: "0.6rem", fontWeight: 800, padding: "2px 8px" }}>NEW</span>}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <p style={{ color: ["Anemia", "High", "Critical"].some(k => activity.result?.includes(k)) ? "#be123c" : "#059669", fontSize: "0.8rem", margin: "0 0 4px", fontWeight: 600 }}>
+                      {activity.type.toUpperCase()} — {activity.result}
+                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       {activity.verified
-                        ? <CheckCircle className="w-4 h-4" style={{ color: "#4ade80" }} title="Verified" />
-                        : <Clock className="w-4 h-4" style={{ color: "#fbbf24" }} title="Pending" />}
-                      <span className="text-xs" style={{ color: theme.textMuted }}>{new Date(activity.timestamp).toLocaleString()}</span>
+                        ? <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#059669", fontSize: "0.72rem", fontWeight: 700 }}><ShieldCheck style={{ width: 12, height: 12 }} /> Verified</span>
+                        : <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#92400e", fontSize: "0.72rem", fontWeight: 700 }}><ShieldAlert style={{ width: 12, height: 12 }} /> Unverified</span>
+                      }
+                      <span style={{ color: theme.textMuted, fontSize: "0.72rem" }}>{new Date(activity.timestamp).toLocaleString()}</span>
                     </div>
                   </div>
-                );
-              }) : (
-                <div className="text-center py-16">
-                  <Eye className="w-10 h-10 mx-auto mb-3" style={{ color: theme.textMuted }} />
-                  <p className="text-sm" style={{ color: theme.textMuted }}>No activity for this period.</p>
                 </div>
-              )}
-            </div>
+              );
+            }) : (
+              <div style={{ textAlign: "center", padding: "48px 0", color: theme.textMuted }}>
+                <Activity style={{ width: 40, height: 40, margin: "0 auto 12px", opacity: 0.4 }} />
+                <p style={{ fontWeight: 600 }}>No activity for this period.</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* ════ ANALYTICS ════ */}
         {activeTab === "analytics" && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-2xl p-6" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-                <h3 className="font-bold text-white mb-5 flex items-center gap-2 text-sm">
-                  <BarChart3 className="w-4 h-4" style={{ color: "#f9a8d4" }} />Check Distribution
-                </h3>
+          <div style={{ display: "grid", gap: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+              <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 24, boxShadow: theme.shadow }}>
+                <h3 style={{ color: theme.heading, fontWeight: 700, fontSize: "1rem", marginBottom: 20 }}>Check Distribution</h3>
                 {[
                   { label: "Anemia Checks", value: stats?.anemiaChecks ?? 0, color: "#f43f5e" },
-                  { label: "PCOD Checks",   value: stats?.pcodChecks ?? 0,   color: "#e91e8c" },
-                  { label: "Combined",      value: stats?.combinedChecks ?? 0, color: "#c084fc" },
+                  { label: "PCOD Checks", value: stats?.pcodChecks ?? 0, color: theme.primary },
+                  { label: "Combined", value: stats?.combinedChecks ?? 0, color: "#c084fc" },
                 ].map(item => {
                   const total = (stats?.anemiaChecks ?? 0) + (stats?.pcodChecks ?? 0) + (stats?.combinedChecks ?? 0) || 1;
                   const pct = Math.round((item.value / total) * 100);
                   return (
-                    <div key={item.label} className="mb-4">
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span style={{ color: "rgba(255,200,220,0.7)" }}>{item.label}</span>
-                        <span className="font-bold text-white">{item.value} <span style={{ color: theme.textMuted }}>({pct}%)</span></span>
+                    <div key={item.label} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ color: theme.text, fontSize: "0.85rem", fontWeight: 600 }}>{item.label}</span>
+                        <span style={{ color: theme.heading, fontWeight: 700, fontSize: "0.85rem" }}>{item.value} ({pct}%)</span>
                       </div>
-                      <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${item.color}, ${item.color}88)` }} />
+                      <div style={{ height: 8, background: "rgba(233,30,140,0.1)", borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: item.color, borderRadius: 4, transition: "width 0.8s ease" }} />
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="rounded-2xl p-6" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-                <h3 className="font-bold text-white mb-5 flex items-center gap-2 text-sm">
-                  <AlertTriangle className="w-4 h-4" style={{ color: "#f9a8d4" }} />Risk Breakdown
-                </h3>
-                {[
-                  { label: "High Risk · Anemia",   value: stats?.clusterStats.anemiaHighRisk ?? 0,   color: "#ef4444" },
-                  { label: "Medium Risk · Anemia",  value: stats?.clusterStats.anemiaMediumRisk ?? 0,  color: "#f97316" },
-                  { label: "Low Risk · Anemia",     value: stats?.clusterStats.anemiaLowRisk ?? 0,     color: "#22c55e" },
-                  { label: "High Risk · PCOD",      value: stats?.clusterStats.pcodHighRisk ?? 0,      color: "#e91e8c" },
-                  { label: "Medium Risk · PCOD",    value: stats?.clusterStats.pcodMediumRisk ?? 0,    color: "#f59e0b" },
-                  { label: "Low Risk · PCOD",       value: stats?.clusterStats.pcodLowRisk ?? 0,       color: "#10b981" },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
-                      <span className="text-xs" style={{ color: "rgba(255,200,220,0.7)" }}>{item.label}</span>
+              <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 24, boxShadow: theme.shadow }}>
+                <h3 style={{ color: theme.heading, fontWeight: 700, fontSize: "1rem", marginBottom: 20 }}>Risk Breakdown</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {[
+                    { label: "High Risk · Anemia", value: stats?.clusterStats.anemiaHighRisk ?? 0, color: "#ef4444" },
+                    { label: "Medium Risk · Anemia", value: stats?.clusterStats.anemiaMediumRisk ?? 0, color: "#f97316" },
+                    { label: "Low Risk · Anemia", value: stats?.clusterStats.anemiaLowRisk ?? 0, color: "#22c55e" },
+                    { label: "High Risk · PCOD", value: stats?.clusterStats.pcodHighRisk ?? 0, color: theme.primary },
+                    { label: "Medium Risk · PCOD", value: stats?.clusterStats.pcodMediumRisk ?? 0, color: "#f59e0b" },
+                    { label: "Low Risk · PCOD", value: stats?.clusterStats.pcodLowRisk ?? 0, color: "#10b981" },
+                  ].map(item => (
+                    <div key={item.label} style={{ background: `${item.color}10`, border: `1px solid ${item.color}30`, borderRadius: 12, padding: "10px 14px" }}>
+                      <p style={{ color: `${item.color}`, fontSize: "0.7rem", fontWeight: 700, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{item.label}</p>
+                      <p style={{ color: theme.heading, fontSize: "1.4rem", fontWeight: 800, margin: 0 }}>{item.value}</p>
                     </div>
-                    <span className="text-sm font-bold text-white">{item.value}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
               {[
-                { label: "Total Checks",    value: (stats?.anemiaChecks ?? 0) + (stats?.pcodChecks ?? 0) + (stats?.combinedChecks ?? 0) },
-                { label: "Avg / Day",       value: timeFilter === "week" ? Math.round(((stats?.anemiaChecks ?? 0) + (stats?.pcodChecks ?? 0)) / 7) : "—" },
-                { label: "Verified",        value: stats?.blockchainRecords ?? 0 },
-                { label: "Registered",      value: stats?.totalUsers ?? 0 },
+                { label: "Total Checks", value: (stats?.anemiaChecks ?? 0) + (stats?.pcodChecks ?? 0) + (stats?.combinedChecks ?? 0) },
+                { label: "Avg / Day", value: timeFilter === "week" ? Math.round(((stats?.anemiaChecks ?? 0) + (stats?.pcodChecks ?? 0)) / 7) : "—" },
+                { label: "Verified", value: stats?.blockchainRecords ?? 0 },
+                { label: "Registered", value: stats?.totalUsers ?? 0 },
               ].map(s => (
-                <div key={s.label} className="rounded-xl px-5 py-4 text-center"
-                  style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-                  <p className="text-2xl font-bold text-white">{s.value}</p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>{s.label}</p>
+                <div key={s.label} style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 16, padding: "18px 20px", textAlign: "center", boxShadow: theme.shadow }}>
+                  <p style={{ color: theme.heading, fontSize: "1.8rem", fontWeight: 800, margin: "0 0 4px" }}>{s.value}</p>
+                  <p style={{ color: theme.textMuted, fontSize: "0.75rem", fontWeight: 600, margin: 0 }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -734,43 +750,37 @@ const AdminDashboard: React.FC = () => {
 
         {/* ════ ALERTS ════ */}
         {activeTab === "alerts" && (
-          <div className="space-y-4">
-            <div className="rounded-2xl p-6" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-              <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
-                <Bell className="w-5 h-5" style={{ color: "#f9a8d4" }} />Health Alerts
-              </h2>
+          <div style={{ display: "grid", gap: 20 }}>
+            <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 24, boxShadow: theme.shadow }}>
+              <h2 style={{ color: theme.heading, fontWeight: 800, fontSize: "1.1rem", marginBottom: 20 }}>Health Alerts</h2>
               {alertCnt === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: "#4ade80" }} />
-                  <p className="font-semibold text-white">All Clear!</p>
-                  <p className="text-sm mt-1" style={{ color: theme.textMuted }}>No critical alerts for this period.</p>
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <CheckCircle style={{ width: 48, height: 48, color: "#10b981", margin: "0 auto 12px" }} />
+                  <h3 style={{ color: "#059669", fontWeight: 800, margin: "0 0 6px" }}>All Clear!</h3>
+                  <p style={{ color: theme.textMuted, fontSize: "0.85rem", margin: 0 }}>No critical alerts for this period.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {(stats?.clusterStats.anemiaHighRisk ?? 0) > 0 && <AlertCard level="critical" title="High-Risk Anemia Cases" message={`${stats!.clusterStats.anemiaHighRisk} users flagged with high-risk anemia. Immediate clinical review recommended.`} />}
-                  {(stats?.clusterStats.pcodHighRisk ?? 0) > 0 && <AlertCard level="critical" title="High-Risk PCOD Cases" message={`${stats!.clusterStats.pcodHighRisk} users showing high-risk PCOD symptoms. Gynecological consultation advised.`} />}
-                  {(stats?.clusterStats.anemiaMediumRisk ?? 0) > 0 && <AlertCard level="warning" title="Medium-Risk Anemia Cases" message={`${stats!.clusterStats.anemiaMediumRisk} users in medium-risk anemia category. Dietary follow-up suggested.`} />}
-                  {(stats?.clusterStats.pcodMediumRisk ?? 0) > 0 && <AlertCard level="warning" title="Medium-Risk PCOD Cases" message={`${stats!.clusterStats.pcodMediumRisk} users with moderate PCOD risk. Lifestyle guidance recommended.`} />}
+                <div style={{ display: "grid", gap: 12 }}>
+                  {(stats?.clusterStats.anemiaHighRisk ?? 0) > 0 && <AlertCard theme={theme} level="critical" title="High-Risk Anemia Cases" message={`${stats?.clusterStats.anemiaHighRisk} students flagged with high-risk anemia requiring immediate attention.`} />}
+                  {(stats?.clusterStats.pcodHighRisk ?? 0) > 0 && <AlertCard theme={theme} level="critical" title="High-Risk PCOD Cases" message={`${stats?.clusterStats.pcodHighRisk} students flagged with high-risk PCOD requiring immediate attention.`} />}
+                  {(stats?.clusterStats.anemiaMediumRisk ?? 0) > 0 && <AlertCard theme={theme} level="warning" title="Medium-Risk Anemia Cases" message={`${stats?.clusterStats.anemiaMediumRisk} students with medium-risk anemia. Monitor and follow up.`} />}
+                  {(stats?.clusterStats.pcodMediumRisk ?? 0) > 0 && <AlertCard theme={theme} level="warning" title="Medium-Risk PCOD Cases" message={`${stats?.clusterStats.pcodMediumRisk} students with medium-risk PCOD. Monitor and follow up.`} />}
                 </div>
               )}
             </div>
 
-            <div className="rounded-2xl p-6" style={{ background: theme.card, border: `1px solid ${theme.border}` }}>
-              <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                <Zap className="w-4 h-4" style={{ color: "#f9a8d4" }} />System Status
-              </h3>
+            <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 24, boxShadow: theme.shadow }}>
+              <h3 style={{ color: theme.heading, fontWeight: 700, fontSize: "1rem", marginBottom: 16 }}>System Status</h3>
               {[
-                { label: "ML Model",          status: "Operational", ok: true },
-                { label: "Database",          status: "Connected",   ok: true },
-                { label: "Blockchain",        status: stats?.blockchainRecords ? "Active" : "Idle", ok: true },
-                { label: "Live Data Feed",    status: isLive ? "Running" : "Paused", ok: isLive },
+                { label: "ML Model", status: "Operational", ok: true },
+                { label: "Database", status: "Connected", ok: true },
+                { label: "Blockchain", status: stats?.blockchainRecords ? "Active" : "Idle", ok: true },
+                { label: "Live Data Feed", status: isLive ? "Running" : "Paused", ok: isLive },
               ].map((item, idx, arr) => (
-                <div key={item.label} className="flex items-center justify-between py-3"
-                  style={{ borderBottom: idx < arr.length - 1 ? `1px solid ${theme.border}` : "none" }}>
-                  <span className="text-sm" style={{ color: "rgba(255,200,220,0.7)" }}>{item.label}</span>
-                  <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full"
-                    style={{ background: item.ok ? "rgba(74,222,128,0.08)" : "rgba(239,68,68,0.08)", color: item.ok ? "#86efac" : "#fca5a5", border: `1px solid ${item.ok ? "rgba(74,222,128,0.22)" : "rgba(239,68,68,0.22)"}` }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: item.ok ? "#4ade80" : "#ef4444" }} />
+                <div key={item.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: idx < arr.length - 1 ? `1px solid ${theme.border}` : "none" }}>
+                  <span style={{ color: theme.text, fontSize: "0.875rem", fontWeight: 600 }}>{item.label}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, background: item.ok ? "rgba(16,185,129,0.1)" : "rgba(244,63,94,0.1)", border: `1px solid ${item.ok ? "rgba(16,185,129,0.3)" : "rgba(244,63,94,0.3)"}`, borderRadius: 20, padding: "4px 12px", color: item.ok ? "#059669" : "#be123c", fontSize: "0.75rem", fontWeight: 700 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: item.ok ? "#10b981" : "#ef4444" }} />
                     {item.status}
                   </span>
                 </div>
@@ -779,45 +789,48 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
       </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      `}</style>
     </div>
   );
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-const KpiCard: React.FC<{ icon: React.ReactNode; value: number; label: string; sub: string; color: string }> = ({ icon, value, label, sub, color }) => (
-  <div className="rounded-2xl p-5 transition-all hover:scale-[1.03] cursor-default"
-    style={{ background: `linear-gradient(135deg, ${color}18, ${color}08)`, border: `1px solid ${color}28` }}>
-    <div className="flex items-start justify-between mb-3">
-      <div className="p-2 rounded-xl" style={{ background: `${color}18` }}>
-        {React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5", style: { color } })}
-      </div>
-      <ArrowUpRight className="w-3.5 h-3.5 opacity-40" style={{ color }} />
+const KpiCard: React.FC<{ theme: any; icon: React.ReactNode; value: number; label: string; sub: string; color: string }> = ({ theme, icon, value, label, sub, color }) => (
+  <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: "22px 24px", boxShadow: theme.shadow, display: "flex", alignItems: "flex-start", gap: 16 }}>
+    <div style={{ width: 44, height: 44, borderRadius: 13, background: `${color}14`, border: `1px solid ${color}25`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {React.cloneElement(icon as React.ReactElement, { style: { width: 20, height: 20, color } })}
     </div>
-    <p className="text-2xl font-bold text-white">{value}</p>
-    <p className="text-sm font-medium mt-0.5" style={{ color: "rgba(255,220,235,0.85)" }}>{label}</p>
-    <p className="text-xs mt-0.5" style={{ color: "rgba(255,180,210,0.35)" }}>{sub}</p>
+    <div>
+      <p style={{ color: theme.heading, fontSize: "1.85rem", fontWeight: 800, lineHeight: 1, margin: "0 0 4px" }}>{value.toLocaleString()}</p>
+      <p style={{ color: theme.text, fontSize: "0.875rem", fontWeight: 700, margin: "0 0 2px" }}>{label}</p>
+      <p style={{ color: theme.textMuted, fontSize: "0.75rem", margin: 0 }}>{sub}</p>
+    </div>
   </div>
 );
 
-const RiskPanel: React.FC<{ title: string; icon: React.ReactNode; high: number; medium: number; low: number }> = ({ title, icon, high, medium, low }) => {
+const RiskPanel: React.FC<{ theme: any; title: string; icon: React.ReactNode; high: number; medium: number; low: number }> = ({ theme, title, icon, high, medium, low }) => {
   const total = high + medium + low || 1;
   return (
-    <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,160,200,0.1)" }}>
-      <h3 className="font-bold text-white mb-4 text-sm flex items-center gap-2">
-        {React.cloneElement(icon as React.ReactElement, { className: "w-4 h-4", style: { color: "#f9a8d4" } })} {title}
-      </h3>
+    <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 22, boxShadow: theme.shadow }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        {React.cloneElement(icon as React.ReactElement, { style: { width: 16, height: 16, color: theme.primary } })}
+        <span style={{ color: theme.heading, fontWeight: 700, fontSize: "0.9rem" }}>{title}</span>
+      </div>
       {[
         { label: "High Risk", value: high, color: "#ef4444" },
         { label: "Medium Risk", value: medium, color: "#f97316" },
         { label: "Low Risk", value: low, color: "#22c55e" },
       ].map(r => (
-        <div key={r.label} className="mb-3.5">
-          <div className="flex justify-between text-xs mb-1.5">
-            <span style={{ color: "rgba(255,200,220,0.65)" }}>{r.label}</span>
-            <span className="font-bold" style={{ color: r.color }}>{r.value}</span>
+        <div key={r.label} style={{ marginBottom: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ color: theme.text, fontSize: "0.8rem", fontWeight: 600 }}>{r.label}</span>
+            <span style={{ color: theme.heading, fontWeight: 700, fontSize: "0.8rem" }}>{r.value}</span>
           </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${(r.value / total) * 100}%`, background: r.color }} />
+          <div style={{ height: 7, background: "rgba(233,30,140,0.1)", borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${(r.value / total) * 100}%`, background: r.color, borderRadius: 4, transition: "width 0.8s ease" }} />
           </div>
         </div>
       ))}
@@ -825,33 +838,38 @@ const RiskPanel: React.FC<{ title: string; icon: React.ReactNode; high: number; 
   );
 };
 
-const QuickStat: React.FC<{ label: string; value: number; icon: React.ReactNode; color: string }> = ({ label, value, icon, color }) => (
-  <div className="flex items-center gap-4 rounded-xl p-4" style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,160,200,0.1)" }}>
-    <div className="p-3 rounded-xl" style={{ background: `${color}14` }}>
-      {React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5", style: { color } })}
+const QuickStat: React.FC<{ theme: any; label: string; value: number; icon: React.ReactNode; color: string }> = ({ theme, label, value, icon, color }) => (
+  <div style={{ background: theme.cardSolid, border: `1px solid ${theme.border}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, boxShadow: theme.shadow }}>
+    <div style={{ width: 38, height: 38, borderRadius: 10, background: `${color}12`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {React.cloneElement(icon as React.ReactElement, { style: { width: 18, height: 18, color } })}
     </div>
     <div>
-      <p className="text-xl font-bold text-white">{value}</p>
-      <p className="text-xs" style={{ color: "rgba(255,180,210,0.45)" }}>{label}</p>
+      <p style={{ color: theme.heading, fontSize: "1.3rem", fontWeight: 800, margin: "0 0 2px" }}>{value.toLocaleString()}</p>
+      <p style={{ color: theme.textMuted, fontSize: "0.75rem", fontWeight: 600, margin: 0 }}>{label}</p>
     </div>
   </div>
 );
 
 const PredictionBadge: React.FC<{ value: string }> = ({ value }) => {
-  const s = value === "Safe"   ? { bg: "rgba(16,185,129,0.12)", color: "#6ee7b7", bd: "rgba(16,185,129,0.25)" }
-    : value === "Anemia" ? { bg: "rgba(244,63,94,0.12)",  color: "#fda4af", bd: "rgba(244,63,94,0.25)" }
-    : value === "PCOD"   ? { bg: "rgba(245,158,11,0.12)", color: "#fcd34d", bd: "rgba(245,158,11,0.25)" }
-    :                      { bg: "rgba(255,255,255,0.05)", color: "rgba(255,180,210,0.4)", bd: "rgba(255,255,255,0.1)" };
-  return <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold" style={{ background: s.bg, color: s.color, border: `1px solid ${s.bd}` }}>{value || "—"}</span>;
+  const s = value === "Safe"
+    ? { bg: "rgba(16,185,129,0.1)", color: "#059669", bd: "rgba(16,185,129,0.3)" }
+    : value === "Anemia"
+    ? { bg: "rgba(244,63,94,0.1)", color: "#be123c", bd: "rgba(244,63,94,0.3)" }
+    : value === "PCOD"
+    ? { bg: "rgba(245,158,11,0.1)", color: "#92400e", bd: "rgba(245,158,11,0.3)" }
+    : { bg: "rgba(233,30,140,0.06)", color: "#c2185b", bd: "rgba(233,30,140,0.2)" };
+  return <span style={{ background: s.bg, border: `1px solid ${s.bd}`, borderRadius: 20, padding: "3px 10px", color: s.color, fontSize: "0.75rem", fontWeight: 700 }}>{value || "—"}</span>;
 };
 
-const AlertCard: React.FC<{ level: "critical" | "warning"; title: string; message: string }> = ({ level, title, message }) => (
-  <div className="flex gap-3 p-4 rounded-xl"
-    style={{ background: level === "critical" ? "rgba(239,68,68,0.07)" : "rgba(245,158,11,0.07)", border: `1px solid ${level === "critical" ? "rgba(239,68,68,0.22)" : "rgba(245,158,11,0.22)"}` }}>
-    <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: level === "critical" ? "#f87171" : "#fbbf24" }} />
+const AlertCard: React.FC<{ theme: any; level: "critical" | "warning"; title: string; message: string }> = ({ theme, level, title, message }) => (
+  <div style={{ background: level === "critical" ? "rgba(244,63,94,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${level === "critical" ? "rgba(244,63,94,0.25)" : "rgba(245,158,11,0.25)"}`, borderRadius: 14, padding: "14px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+    {level === "critical"
+      ? <AlertCircle style={{ width: 20, height: 20, color: "#ef4444", flexShrink: 0, marginTop: 1 }} />
+      : <AlertTriangle style={{ width: 20, height: 20, color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
+    }
     <div>
-      <p className="font-semibold text-white text-sm">{title}</p>
-      <p className="text-xs mt-1" style={{ color: "rgba(255,200,220,0.55)" }}>{message}</p>
+      <p style={{ color: level === "critical" ? "#be123c" : "#92400e", fontWeight: 700, fontSize: "0.875rem", margin: "0 0 4px" }}>{title}</p>
+      <p style={{ color: level === "critical" ? "#9f1239" : "#78350f", fontSize: "0.8rem", margin: 0 }}>{message}</p>
     </div>
   </div>
 );
