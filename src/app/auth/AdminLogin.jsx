@@ -36,7 +36,7 @@ export default function AdminLogin() {
         },
         credentials: "include",
         body: JSON.stringify({
-          identifier: form.roll_number,  // ✅ Changed from roll_number to identifier
+          identifier: form.roll_number,
           password: form.password,
         }),
       });
@@ -58,7 +58,6 @@ export default function AdminLogin() {
         return;
       }
 
-      // ✅ Map backend fields to frontend expectations
       const userData = {
         id: data.user.id,
         name: data.user.name,
@@ -86,25 +85,28 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-white">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-purple-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-white px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-purple-100">
+        
+        {/* Header */}
         <div className="text-center mb-6">
-          <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+          <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
             ⚙
           </div>
-          <h1 className="mt-4 text-xl font-semibold text-gray-800">
+          <h1 className="mt-4 text-lg sm:text-xl font-semibold text-gray-800">
             Admin Console Login
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
             Restricted access for authorized administrators.
           </p>
         </div>
 
+        {/* Form Fields */}
         <div className="space-y-4">
           <input
             type="text"
             placeholder="Admin Roll Number"
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
             value={form.roll_number}
             onChange={(e) =>
               setForm({ ...form, roll_number: e.target.value })
@@ -115,8 +117,8 @@ export default function AdminLogin() {
 
           <input
             type="password"
-            placeholder="Admin password"
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+            placeholder="Admin Password"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
             value={form.password}
             onChange={(e) =>
               setForm({ ...form, password: e.target.value })
@@ -126,23 +128,26 @@ export default function AdminLogin() {
           />
 
           {error && (
-            <p className="text-sm text-red-500">{error}</p>
+            <div className="bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm p-3 rounded-lg text-center">
+              {error}
+            </div>
           )}
 
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="w-full mt-2 py-2 rounded-lg text-white font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-2 py-2.5 sm:py-3 rounded-lg text-white text-sm sm:text-base font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Logging in..." : "Admin Login"}
           </button>
         </div>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        {/* Footer */}
+        <div className="mt-6 text-center text-xs sm:text-sm text-gray-500">
           Not an admin?{" "}
           <span
             onClick={() => navigate("/login")}
-            className="text-purple-600 cursor-pointer hover:underline"
+            className="text-purple-600 cursor-pointer hover:underline font-medium"
           >
             Go to user login
           </span>
