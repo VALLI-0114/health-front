@@ -822,6 +822,7 @@ export default function HealthDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {features.map((feature, idx) => {
               const Icon = feature.icon;
+              const isHovered = hoveredCard === feature.id;
               return (
                 <div
                   key={feature.id}
@@ -831,28 +832,71 @@ export default function HealthDashboard() {
                   style={{
                     background: '#FFFFFF',
                     borderRadius: '12px',
-                    padding: '16px',
-                    border: hoveredCard === feature.id ? '2px solid #8B5CF6' : '2px solid rgba(139,92,246,0.1)',
+                    padding: '20px 24px',
+                    border: isHovered ? '2px solid #8B5CF6' : '2px solid rgba(139,92,246,0.1)',
                     transition: 'all 0.3s ease',
-                    transform: hoveredCard === feature.id ? 'translateX(4px)' : 'translateX(0)',
-                    boxShadow: hoveredCard === feature.id ? '0 8px 24px rgba(139,92,246,0.15)' : '0 2px 8px rgba(0,0,0,0.03)',
+                    transform: isHovered ? 'translateX(6px)' : 'translateX(0)',
+                    boxShadow: isHovered ? '0 8px 24px rgba(139,92,246,0.15)' : '0 2px 8px rgba(0,0,0,0.03)',
                     cursor: 'pointer',
                     animation: `slideUp 0.5s ease-out ${idx * 0.1}s backwards`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
                   }}
-                  className="feature-card"
+                  className="feature-card-inner"
                 >
-                  {/* Mobile: stacked, Desktop: row */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '52px', height: '52px', background: 'linear-gradient(135deg, #F3E8FF, #FDF2F8)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={28} color={feature.color} strokeWidth={1.5} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: '700', color: '#1F2937' }}>{feature.title}</h3>
-                      <p style={{ margin: 0, fontSize: '12px', color: '#6B7280', lineHeight: '1.5' }} className="feature-desc">{feature.description}</p>
-                    </div>
+                  {/* Icon */}
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    background: 'linear-gradient(135deg, #F3E8FF, #FDF2F8)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'all 0.3s ease',
+                    transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1)',
+                    boxShadow: isHovered ? `0 6px 14px ${feature.color}25` : 'none',
+                  }}>
+                    <Icon size={32} color={feature.color} strokeWidth={1.5} />
                   </div>
+
+                  {/* Text — takes all remaining space */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', fontWeight: '700', color: '#1F2937' }}>
+                      {feature.title}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#6B7280', lineHeight: '1.55' }}>
+                      {feature.description}
+                    </p>
+                  </div>
+
+                  {/* Button — always on the right, never wraps */}
                   <button
-                    style={{ marginTop: '12px', width: '100%', padding: '10px', background: 'linear-gradient(90deg, #8B5CF6, #EC4899)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(139,92,246,0.25)' }}
+                    onClick={(e) => { e.stopPropagation(); window.location.href = feature.route; }}
+                    style={{
+                      flexShrink: 0,
+                      padding: '11px 28px',
+                      background: isHovered
+                        ? 'linear-gradient(90deg, #7C3AED, #D946EF)'
+                        : 'linear-gradient(90deg, #8B5CF6, #EC4899)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.3s ease',
+                      transform: isHovered ? 'scale(1.04)' : 'scale(1)',
+                      boxShadow: isHovered
+                        ? '0 8px 20px rgba(139,92,246,0.35)'
+                        : '0 4px 12px rgba(139,92,246,0.25)',
+                    }}
                     className="feature-btn"
                   >
                     <span>✓</span>{feature.buttonText}
@@ -901,35 +945,49 @@ export default function HealthDashboard() {
         * { box-sizing: border-box; }
         body { margin: 0; padding: 0; overflow-x: hidden; }
 
-        /* Mobile (default): show mobile-nav, hide desktop-nav */
+        /* ===== MOBILE (default, <480px) ===== */
         .mobile-nav { display: flex !important; }
         .desktop-nav { display: none !important; }
         .mobile-menu { display: block !important; }
         .profile-name-block { display: none !important; }
-
-        /* Tips: 1 column on mobile */
-        .tips-grid { grid-template-columns: 1fr; }
-
-        /* Feature card: full-width button on mobile */
-        .feature-btn { display: flex !important; }
-        .feature-desc { display: block; }
-
-        /* Header title: shorter on mobile */
         .header-title { font-size: 14px !important; }
         .header-subtitle { display: none !important; }
+        .tips-grid { grid-template-columns: 1fr; }
 
-        /* Tablet (640px+) */
+        /* On small mobile: stack button below icon+text */
+        .feature-btn {
+          width: 100% !important;
+          margin-top: 12px !important;
+          justify-content: center !important;
+          padding: 10px 16px !important;
+        }
+        /* Wrap card content vertically on small mobile */
+        .feature-card-inner { flex-wrap: wrap !important; }
+
+        /* ===== TABLET (480px+) ===== */
+        @media (min-width: 480px) {
+          /* Button back in the row, right-aligned, no wrap */
+          .feature-btn {
+            width: auto !important;
+            margin-top: 0 !important;
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+            padding: 11px 22px !important;
+          }
+          .feature-card-inner { flex-wrap: nowrap !important; }
+        }
+
+        /* ===== TABLET MEDIUM (640px+) ===== */
         @media (min-width: 640px) {
           .dashboard-header { padding: 14px 24px !important; }
           .dashboard-main { padding: 24px !important; }
           .header-title { font-size: 16px !important; }
           .header-subtitle { display: block !important; }
           .tips-grid { grid-template-columns: repeat(3, 1fr) !important; }
-          .feature-card { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 20px !important; padding: 20px !important; }
-          .feature-btn { width: auto !important; margin-top: 0 !important; white-space: nowrap; flex-shrink: 0; padding: 10px 24px !important; }
+          .feature-btn { padding: 11px 28px !important; }
         }
 
-        /* Desktop (1024px+) */
+        /* ===== DESKTOP (1024px+) ===== */
         @media (min-width: 1024px) {
           .dashboard-header { padding: 16px 40px !important; }
           .dashboard-main { padding: 40px !important; }
