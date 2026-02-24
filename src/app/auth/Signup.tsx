@@ -4,7 +4,6 @@ import { signupUser } from "./authservice";
 import { CheckCircle, Loader2 } from "lucide-react";
 import Logo from "../../assets/Logo.jpg";
 
-// 2️⃣ Move Translations OUTSIDE component to prevent re-creation on every render
 const translations = {
   en: {
     header: "Create Your Account",
@@ -92,7 +91,6 @@ const translations = {
 export default function Signup() {
   const navigate = useNavigate();
 
-  // 1️⃣ Language State
   const [lang] = useState(localStorage.getItem("lang") || "en");
   const t = translations[lang];
 
@@ -107,14 +105,11 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // 6️⃣ Use useCallback for performance
   const handleSubmit = useCallback(async () => {
-    // 3️⃣ Prevent Double Submit
     if (loading) return;
 
     setError("");
 
-    // Validation
     if (!form.name || !form.roll || !form.age || !form.password) {
       setError(t.errors.required);
       return;
@@ -125,7 +120,6 @@ export default function Signup() {
       return;
     }
 
-    // 2️⃣ Password Rule Validation
     if (form.password.length < 6) {
       setError(
         lang === "en"
@@ -140,16 +134,14 @@ export default function Signup() {
     try {
       setLoading(true);
 
-      // 1️⃣ Field Names & 4️⃣ Role Assignment
       await signupUser({
-        full_name: form.name, // Maps to backend `full_name`
-        roll_no: form.roll,   // Maps to backend `roll_no`
+        full_name: form.name,
+        roll_no: form.roll,
         age: Number(form.age),
         password: form.password,
-        role: "user",         // Explicitly set default role
+        role: "user",
       });
 
-      // 5️⃣ Clear Form before showing success
       setForm({ name: "", roll: "", age: "", password: "" });
       setSuccess(true);
 
@@ -157,56 +149,54 @@ export default function Signup() {
         navigate("/login");
       }, 1800);
     } catch (err: any) {
-      setError(
-        err?.response?.data?.error || t.errors.failed
-      );
+      setError(err?.response?.data?.error || t.errors.failed);
     } finally {
       setLoading(false);
     }
   }, [form, loading, lang, t, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-white">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-purple-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-white px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-purple-100">
 
         {/* SUCCESS VIEW */}
         {success ? (
-          <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
-            <CheckCircle className="w-16 h-16 text-green-500 animate-scale-in" />
-            <h2 className="mt-4 text-xl font-semibold text-gray-800">
+          <div className="flex flex-col items-center justify-center py-10 sm:py-12 animate-fade-in">
+            <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
+            <h2 className="mt-4 text-lg sm:text-xl font-semibold text-gray-800 text-center">
               {t.success.title}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 text-center">
               {t.success.redirect}
             </p>
           </div>
         ) : (
           <>
             {/* HEADER */}
-            <div className="text-center mb-6">
-              <div className="mx-auto w-20 h-20 rounded-full bg-white shadow-md flex items-center justify-center p-2">
-  <img
-    src={Logo}
-    alt="Qubito Logo"
-    className="w-full h-full object-contain"
-  />
-</div>
+            <div className="text-center mb-5 sm:mb-6">
+              <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-md flex items-center justify-center p-2">
+                <img
+                  src={Logo}
+                  alt="Qubito Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
 
-              <h1 className="mt-4 text-xl font-semibold text-gray-800">
+              <h1 className="mt-3 sm:mt-4 text-lg sm:text-xl font-semibold text-gray-800">
                 {t.header}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 {t.subHeader}
               </p>
             </div>
 
             {/* FORM */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <input
                 type="text"
                 placeholder={t.placeholders.name}
                 value={form.name}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-purple-400 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-purple-400 outline-none transition-all duration-200"
                 onChange={(e) =>
                   setForm({ ...form, name: e.target.value })
                 }
@@ -216,7 +206,7 @@ export default function Signup() {
                 type="text"
                 placeholder={t.placeholders.roll}
                 value={form.roll}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-purple-400 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-purple-400 outline-none transition-all duration-200"
                 onChange={(e) =>
                   setForm({ ...form, roll: e.target.value })
                 }
@@ -228,7 +218,7 @@ export default function Signup() {
                 value={form.age}
                 min={5}
                 max={22}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-purple-400 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-purple-400 outline-none transition-all duration-200"
                 onChange={(e) =>
                   setForm({ ...form, age: e.target.value })
                 }
@@ -238,21 +228,23 @@ export default function Signup() {
                 type="password"
                 placeholder={t.placeholders.password}
                 value={form.password}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-purple-400 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-purple-400 outline-none transition-all duration-200"
                 onChange={(e) =>
                   setForm({ ...form, password: e.target.value })
                 }
               />
 
               {error && (
-                <p className="text-sm text-red-500">{error}</p>
+                <div className="bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm p-2.5 sm:p-3 rounded-lg text-center">
+                  {error}
+                </div>
               )}
 
               <button
-                type="button" // 3️⃣ Explicitly set type to button to prevent form submission issues
+                type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full mt-2 py-2 rounded-lg text-white font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full mt-2 py-2.5 sm:py-3 rounded-lg text-white text-sm sm:text-base font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -266,11 +258,11 @@ export default function Signup() {
             </div>
 
             {/* FOOTER */}
-            <div className="mt-6 text-center text-sm text-gray-500">
+            <div className="mt-5 sm:mt-6 text-center text-xs sm:text-sm text-gray-500">
               {t.footer.text}{" "}
               <span
                 onClick={() => navigate("/login")}
-                className="text-purple-600 cursor-pointer hover:underline"
+                className="text-purple-600 cursor-pointer hover:underline font-medium"
               >
                 {t.footer.login}
               </span>
