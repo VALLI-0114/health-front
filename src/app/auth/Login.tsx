@@ -75,15 +75,9 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  /* -----------------------------
-     Language handling
-  ------------------------------ */
   const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
   const t = translations[lang] || translations.en;
 
-  /* -----------------------------
-     State
-  ------------------------------ */
   const [form, setForm] = useState({
     identifier: "",
     password: "",
@@ -93,18 +87,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  /* -----------------------------
-     Language toggle handler
-  ------------------------------ */
   const handleLanguageToggle = () => {
     const nextLang = lang === "en" ? "te" : lang === "te" ? "hi" : "en";
     setLang(nextLang);
     localStorage.setItem("lang", nextLang);
   };
 
-  /* -----------------------------
-     Submit Handler
-  ------------------------------ */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -128,10 +116,9 @@ export default function Login() {
         res.user.role === "admin" ? "/admin" : "/dashboard",
         { replace: true }
       );
-
     } catch (err: any) {
       if (err.response?.status === 401) {
-        setError(t.invalid); // Proper translated message
+        setError(t.invalid);
       } else if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
@@ -142,35 +129,29 @@ export default function Login() {
     }
   };
 
-  /* -----------------------------
-     Debug lifecycle
-  ------------------------------ */
   useEffect(() => {
     console.log("🎨 Login mounted");
     return () => console.log("🎨 Login unmounted");
   }, []);
 
-  /* -----------------------------
-     Render
-  ------------------------------ */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full max-w-sm sm:max-w-md bg-white p-6 sm:p-8 rounded-2xl shadow-xl relative">
 
-        {/* Language Toggle Button - Top Right */}
+        {/* Language Toggle Button */}
         <button
           onClick={handleLanguageToggle}
           disabled={loading}
-          className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="absolute top-4 right-4 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           title="Change Language"
         >
-          <Globe size={16} />
+          <Globe size={14} className="sm:w-4 sm:h-4" />
           <span className="font-semibold">{lang.toUpperCase()}</span>
         </button>
 
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="mx-auto w-20 h-20 rounded-full bg-white shadow-md flex items-center justify-center p-2">
+          <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-md flex items-center justify-center p-2">
             <img
               src={Logo}
               alt="Qubito Logo"
@@ -178,12 +159,14 @@ export default function Login() {
             />
           </div>
 
-          <h1 className="mt-4 text-xl font-semibold text-gray-800">{t.title}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t.subtitle}</p>
+          <h1 className="mt-3 sm:mt-4 text-lg sm:text-xl font-semibold text-gray-800 leading-tight px-6">
+            {t.title}
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subtitle}</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
 
           <input
             type="text"
@@ -193,7 +176,7 @@ export default function Login() {
               setForm({ ...form, identifier: e.target.value })
             }
             disabled={loading}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
 
           <div className="relative">
@@ -205,7 +188,7 @@ export default function Login() {
                 setForm({ ...form, password: e.target.value })
               }
               disabled={loading}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed pr-12"
+              className="w-full px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed pr-12"
             />
 
             <button
@@ -214,12 +197,12 @@ export default function Login() {
               disabled={loading}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-purple-600 transition disabled:opacity-50"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Eye size={16} className="sm:w-[18px] sm:h-[18px]" />}
             </button>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg text-center animate-shake">
+            <div className="bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm p-2.5 sm:p-3 rounded-lg text-center animate-shake">
               {error}
             </div>
           )}
@@ -227,7 +210,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-lg text-white font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
+            className="w-full py-2.5 sm:py-3 rounded-lg text-white text-sm sm:text-base font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
           >
             {loading ? t.loggingIn : t.login}
           </button>
@@ -243,7 +226,7 @@ export default function Login() {
           </div>
         </form>
 
-        <div className="mt-4 text-center text-sm text-gray-500">
+        <div className="mt-4 text-center text-xs sm:text-sm text-gray-500">
           {t.newUser}{" "}
           <span
             onClick={() => navigate("/signup")}
@@ -255,7 +238,6 @@ export default function Login() {
 
       </div>
 
-      {/* Custom animations */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
